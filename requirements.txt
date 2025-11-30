@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+# AWS SDK for S3
+boto3 
+# Database ORM and Driver
+sqlalchemy
+psycopg2-binary
+# For QR code generation logic
+qrcode[pil]
+
+passlib
+bcrypt>=4.0,<5.0
+python-jose
+python-multipart
