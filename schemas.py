@@ -3,7 +3,7 @@ from typing import List, Optional
 
 class ShowUser(BaseModel):
     
-    name:str
+    first_name:str
     email:str
       # Use forward reference for ShowBlogs
     class Config:
@@ -11,7 +11,8 @@ class ShowUser(BaseModel):
         
         
 class User(BaseModel):
-    name:str
+    first_name:str
+    last_name:str
     email:str
     password:str
 

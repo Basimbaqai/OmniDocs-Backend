@@ -14,3 +14,7 @@ passlib
 bcrypt>=4.0,<5.0
 python-jose
 python-multipart
+reportlab
+psycopg2-binary
+pillow 
+boto3
