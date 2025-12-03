@@ -18,3 +18,4 @@ reportlab
 psycopg2-binary
 pillow 
 boto3
+qrcode[pil]

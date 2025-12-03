@@ -14,7 +14,7 @@ def recreate_database():
         print("✅ Database recreated with updated schema!")
         print("Tables created:")
         print("  - users (with first_name, last_name, email, password, user_id)")
-        print("  - documents (with document_id, title, s3_link, owner_id, created_at)")
+        print("  - documents (with document_id, title, s3_link, qr_code_link, owner_id, created_at)")
         
     except Exception as e:
         print(f"❌ Error recreating database: {e}")

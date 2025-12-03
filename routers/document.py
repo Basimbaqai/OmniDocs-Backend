@@ -9,6 +9,8 @@ from models import Documents
 import schemas
 import oauth
 from aws_config import s3_client, S3_BUCKET_NAME, S3_REGION
+import qrcode
+import base64
 
 router = APIRouter(
     prefix='/documents',
@@ -24,7 +26,7 @@ async def upload_document(
 ):
     """
     Receives a title and a list of images, creates a PDF, 
-    uploads it to S3, and records the link in the database.
+    uploads it to S3, generates a QR code, and records everything in the database.
     """
     if not images:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No images provided.")
@@ -74,7 +76,7 @@ async def upload_document(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"S3 upload failed: {e}")
 
-    # 3. Store the title and link in the database
+    # 3. Store the title and link in the database (without QR initially)
     try:
         new_doc = Documents(
             title=title, 
@@ -87,13 +89,59 @@ async def upload_document(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {e}")
 
+    # 4. Generate QR code with document information
+    # The QR code will contain a JSON string with document details
+    qr_data = f'{{"document_id": {new_doc.document_id}, "title": "{title}", "owner_id": {current_user.user_id}}}'
+    
+    try:
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Save QR code to buffer
+        qr_buffer = io.BytesIO()
+        qr_img.save(qr_buffer, format='PNG')
+        qr_buffer.seek(0)
+        
+        # Upload QR code to S3
+        qr_s3_key = f"qrcodes/user_{current_user.user_id}/doc_{new_doc.document_id}_qr.png"
+        s3_client.upload_fileobj(
+            qr_buffer,
+            S3_BUCKET_NAME,
+            qr_s3_key,
+            ExtraArgs={'ContentType': 'image/png'}
+        )
+        qr_s3_link = f"https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{qr_s3_key}"
+        
+        # Update database with QR code link
+        new_doc.qr_code_link = qr_s3_link
+        db.commit()
+        db.refresh(new_doc)
+        
+        # Also create base64 version for immediate frontend display
+        qr_buffer.seek(0)
+        qr_base64 = base64.b64encode(qr_buffer.read()).decode('utf-8')
+        
+    except Exception as e:
+        # If QR generation fails, log but don't fail the entire request
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"QR code generation failed: {e}")
+
     return {
         "message": "Document successfully created and uploaded",
         "document_id": new_doc.document_id,
         "title": new_doc.title,
-        "s3_link": new_doc.s3_link
+        "s3_link": new_doc.s3_link,
+        "qr_code_link": qr_s3_link,
+        "qr_code_base64": f"data:image/png;base64,{qr_base64}"
     }
-
 @router.get("/my-documents/")
 async def get_my_documents(
     db: Session = Depends(get_db),

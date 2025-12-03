@@ -25,6 +25,7 @@ class Documents(Base):  # Fixed typo: was "Documnets"
     document_id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), nullable=False)
     s3_link = Column(Text, nullable=False)
+    qr_code_link = Column(Text, nullable=True)  # Add this field
     owner_id = Column(Integer, ForeignKey('users.user_id'))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
