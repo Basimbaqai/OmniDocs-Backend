@@ -11,6 +11,7 @@ import oauth
 from aws_config import s3_client, S3_BUCKET_NAME, S3_REGION
 import qrcode
 import base64
+import requests
 
 router = APIRouter(
     prefix='/documents',
@@ -192,3 +193,80 @@ async def delete_document(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting document: {e}")
+    
+    
+@router.get("/qr-code/{document_id}")
+async def get_qr_code(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(oauth.get_current_user)
+):
+    """
+    Get QR code for a specific document (for displaying in frontend).
+    Returns both S3 link and base64 encoded image.
+    """
+    document = db.query(Documents).filter(
+        Documents.document_id == document_id,
+        Documents.owner_id == current_user.user_id
+    ).first()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found"
+        )
+    
+    if not document.qr_code_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="QR code not found for this document"
+        )
+    
+    # Optionally fetch and convert to base64 for immediate display
+    try:
+        
+        response = requests.get(document.qr_code_link)
+        qr_base64 = base64.b64encode(response.content).decode('utf-8')
+        
+        return {
+            "document_id": document.document_id,
+            "qr_code_link": document.qr_code_link,
+            "qr_code_base64": f"data:image/png;base64,{qr_base64}"
+        }
+    except Exception as e:
+        return {
+            "document_id": document.document_id,
+            "qr_code_link": document.qr_code_link,
+            "qr_code_base64": None
+        }
+        
+@router.get("/download/{document_id}")
+async def get_document_download_link(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: schemas.User = Depends(oauth.get_current_user)
+):
+    """
+    Get S3 download link for a specific document.
+    Only the document owner can access their documents.
+    """
+    # Query document and verify ownership in one step
+    document = db.query(Documents).filter(
+        Documents.document_id == document_id,
+        Documents.owner_id == current_user.user_id
+    ).first()
+    
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found or you don't have permission to access it"
+        )
+    
+    # Return the S3 link along with document metadata
+    return {
+        "document_id": document.document_id,
+        "title": document.title,
+        "s3_link": document.s3_link,
+        "created_at": document.created_at,
+        "message": "Document link retrieved successfully"
+    }
