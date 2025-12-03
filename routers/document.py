@@ -17,6 +17,13 @@ router = APIRouter(
     tags=['Documents']
 )
 
+import base64
+
+router = APIRouter(
+    prefix='/documents',
+    tags=['Documents']
+)
+
 @router.post("/upload-document/")
 async def upload_document(
     title: str = Form(...), 
@@ -111,8 +118,12 @@ async def upload_document(
         qr_img.save(qr_buffer, format='PNG')
         qr_buffer.seek(0)
         
+        # Get QR code bytes for both S3 upload and base64 encoding
+        qr_bytes = qr_buffer.getvalue()
+        
         # Upload QR code to S3
         qr_s3_key = f"qrcodes/user_{current_user.user_id}/doc_{new_doc.document_id}_qr.png"
+        qr_buffer.seek(0)  # Reset buffer position before upload
         s3_client.upload_fileobj(
             qr_buffer,
             S3_BUCKET_NAME,
@@ -126,9 +137,8 @@ async def upload_document(
         db.commit()
         db.refresh(new_doc)
         
-        # Also create base64 version for immediate frontend display
-        qr_buffer.seek(0)
-        qr_base64 = base64.b64encode(qr_buffer.read()).decode('utf-8')
+        # Create base64 version for immediate frontend display using the saved bytes
+        qr_base64 = base64.b64encode(qr_bytes).decode('utf-8')
         
     except Exception as e:
         # If QR generation fails, log but don't fail the entire request
