@@ -21,5 +21,5 @@ def login(request: schemas.UserLogin, db: Session = Depends(get_db)):
     if not HashPassword.verify_password(request.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
     
-    access_token=create_access_token(user.id)
+    access_token=create_access_token(user.user_id)
     return schemas.Token(access_token=access_token, token_type="bearer")

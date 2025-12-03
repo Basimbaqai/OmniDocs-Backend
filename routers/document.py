@@ -101,8 +101,11 @@ async def get_my_documents(
 ):
     """Get all documents owned by the current user"""
     documents = db.query(Documents).filter(Documents.owner_id == current_user.user_id).all()
-    return {"documents": documents}
-
+    if documents:
+        return {"documents": documents}
+    else:
+        return {"message": "No documents found."}
+    
 @router.delete("/delete-document/{document_id}")
 async def delete_document(
     document_id: int,

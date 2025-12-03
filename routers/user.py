@@ -21,22 +21,22 @@ def create_user(request: schemas.User, db: Session = Depends(get_db)):
 def get_current_user(db: Session = Depends(get_db),get_current_user: schemas.User = Depends(oauth.get_current_user)):
     if get_current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    return user.get_current_user(db,get_current_user.id)
+    return user.get_current_user(db,get_current_user.user_id)
 
 @router.get('/{id}', response_model=schemas.ShowUser,status_code=status.HTTP_200_OK)
 def get_user(id: int, db: Session = Depends(get_db),get_current_user: schemas.User = Depends(oauth.get_current_user)):
     if get_current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    return user.get_user(id, db,get_current_user.id)
+    return user.get_user(id, db,get_current_user.user_id)
 
 @router.put('', response_model=schemas.ShowUser,status_code=status.HTTP_202_ACCEPTED)
 def update_user(request: schemas.User, db: Session = Depends(get_db),get_current_user: schemas.User = Depends(oauth.get_current_user)):
     if get_current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    return user.update_user(get_current_user.id, request, db)
+    return user.update_user(get_current_user.user_id, request, db)
 
 @router.delete('',status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(db: Session = Depends(get_db),get_current_user: schemas.User = Depends(oauth.get_current_user)):
     if get_current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    return user.delete_user(get_current_user.id, db)
+    return user.delete_user(get_current_user.user_id, db)
