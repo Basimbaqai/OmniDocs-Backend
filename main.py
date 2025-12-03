@@ -21,6 +21,7 @@ app.include_router(user.router)
 
 app.include_router(document.router)
 
+
 @app.get("/")
 def root():
     return {"message": "Welcome to OmniDocs API"}
