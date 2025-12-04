@@ -1,0 +1,39 @@
+name: CI/CD Docker Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Stop old container if it exists
+            docker stop omnidocs-backend || true
+            docker rm omnidocs-backend || true
+
+            # Pull latest code if repo exists, otherwise clone
+            cd ~
+            if [ -d "backend-temp/.git" ]; then
+              cd backend-temp
+              git reset --hard
+              git pull
+            else
+              git clone https://github.com/Basimbaqai/OmniDocs-Backend backend-temp
+              cd backend-temp
+            fi
+
+            # Build and run Docker image
+            docker build -t omnidocs-backend:latest .
+            docker run -d --name omnidocs-backend -p 8000:8000 omnidocs-backend:latest
