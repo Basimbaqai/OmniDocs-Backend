@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine("sqlite:///omni.db", connect_args={"check_same_thread": False})
+engine = create_engine("sqlite:////app/data/omni.db", connect_args={"check_same_thread": False})
 
 
 @event.listens_for(engine, "connect")
