@@ -17,7 +17,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY_B64 }}
           script: |
             # Stop old container if it exists
             docker stop omnidocs-backend || true
