@@ -23,6 +23,9 @@ jobs:
             docker stop omnidocs-backend || true
             docker rm omnidocs-backend || true
 
+            # Ensure persistent DB directory exists
+            mkdir -p /home/ubuntu/omni-data
+
             # Pull latest code if repo exists, otherwise clone
             cd ~
             if [ -d "backend-temp/.git" ]; then
@@ -34,6 +37,12 @@ jobs:
               cd backend-temp
             fi
 
-            # Build and run Docker image
+            # Build Docker image
             docker build -t omnidocs-backend:latest .
-            docker run -d --name omnidocs-backend -p 8000:8000 omnidocs-backend:latest
+
+            # Run container with persistent DB volume
+            docker run -d \
+              --name omnidocs-backend \
+              -p 8000:8000 \
+              -v /home/ubuntu/omni-data:/app/data \
+              omnidocs-backend:latest
