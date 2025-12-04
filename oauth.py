@@ -16,4 +16,11 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    return token_generation.verify_token(Token, credentials_exception, db)
+
+    # Remove "Bearer " prefix if present
+    if Token.startswith("Bearer "):
+        token = Token[7:]  # strip first 7 characters
+    else:
+        token = Token
+
+    return token_generation.verify_token(token, credentials_exception, db)
