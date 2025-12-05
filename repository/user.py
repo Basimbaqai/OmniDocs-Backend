@@ -78,12 +78,13 @@ def update_user(current_user, request, db: Session):
 
 
 def delete_user(id: int, db: Session):
-    user = db.query(models.User).filter(models.User.user_id == id)
-    if not user.first():
+    user_obj = db.query(models.User).filter(models.User.user_id == id).first()
+
+    if not user_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} not found"
         )
 
-    user.delete(synchronize_session=False)
+    db.delete(user_obj)
     db.commit()
-    return {"message": "User deleted successfully"}
+    # No return needed for 200 OK with status code HTTP_200_OK
