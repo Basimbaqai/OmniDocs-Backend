@@ -39,6 +39,9 @@ def verify_token(token: str, credentials_exception, db: Session):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
-        return db.query(models.User).filter(models.User.user_id == user_id).first()
+        user = db.query(models.User).filter(models.User.user_id == user_id).first()
+        if user is None:
+            raise credentials_exception
+        return user
     except JWTError:
         raise credentials_exception
