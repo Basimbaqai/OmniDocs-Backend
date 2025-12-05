@@ -86,4 +86,4 @@ def delete_user(id: int, db: Session):
 
     user.delete(synchronize_session=False)
     db.commit()
-    return {"detail": "User deleted successfully"}
+    return {"message": "User deleted successfully"}
