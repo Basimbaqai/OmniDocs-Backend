@@ -1,21 +1,18 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
 
-engine = create_engine("sqlite:////app/data/omni.db", connect_args={"check_same_thread": False})
+# Your Neon connection string
+DATABASE_URL = 'postgresql://neondb_owner:npg_rbXTJ1KLq5dF@ep-weathered-bread-a4ubxg1p-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+# Or use environment variable (recommended for security)
+# DATABASE_URL = os.getenv("DATABASE_URL")
 
-
-@event.listens_for(engine, "connect")
-def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
-
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 Base = declarative_base()
-
 
 def get_db():
     db = SessionLocal()
