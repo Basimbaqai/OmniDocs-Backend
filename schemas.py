@@ -5,7 +5,9 @@ from typing import List, Optional
 class ShowUser(BaseModel):
 
     first_name: str
+    last_name: str
     email: str
+    password: str
 
     # Use forward reference for ShowBlogs
     class Config:
